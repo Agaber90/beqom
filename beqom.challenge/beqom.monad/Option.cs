@@ -1,21 +1,33 @@
-﻿
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace beqom.monad;
+﻿namespace beqom.monad;
 
 public struct Option<T>
 {
-    private T? _value;
-
+    private T _value;
     public bool HasValue { get; private set; }
 
-    public T Value => HasValue
-        ? _value!
-        : throw new InvalidOperationException("Option has no value");
+    public T Value
+    {
+        get
+        {
+            if (!HasValue)
+            {
+                throw new InvalidOperationException("Option has no value.");
+            }
+
+            return _value;
+        }
+    }
+
+    internal Option(T value, bool hasValue)
+    {
+        _value = value;
+        HasValue = hasValue;
+    }
+
+    public static Option<T> Empty()
+    {
+        return new Option<T>(default!, false);
+    }
 
     public static Option<T> FromValue(T value)
     {
@@ -24,32 +36,80 @@ public struct Option<T>
             throw new ArgumentNullException(nameof(value));
         }
 
-        return new Option<T>
-        {
-            _value = value,
-            HasValue = true
-        };
+        return new Option<T>(value, true);
     }
 
-    public static Option<T> Empty()
+    public static bool operator ==(Option<T> left, Option<T> right)
     {
-        return new Option<T>
+        if (!left.HasValue && !right.HasValue)
         {
-            _value = default,
-            HasValue = false
-        };
+            return true;
+        }
+        if (left.HasValue != right.HasValue)
+        {
+            return false;
+        }
+
+        return Equals(left._value, right._value);
     }
 
-    public T ValueOr(Func<T> fallback)
+    public static bool operator !=(Option<T> left, Option<T> right) => !(left == right);
+
+    public override bool Equals(object? obj)
     {
-        return HasValue ? _value! : fallback();
+        if (obj is Option<T> other)
+        {
+            return this == other;
+        }
+
+        return false;
+    }
+
+    public override int GetHashCode()
+    {
+        return HasValue ? 1 : 0;
+    }
+
+    public TResult ValueOr<TResult>(Func<TResult> elseBranch)
+    {
+        if (HasValue)
+        {
+            return (TResult)(object)_value!;
+        }
+
+        return elseBranch();
+    }
+
+    public T ValueOr(Func<T> elseBranch)
+    {
+        if (HasValue)
+        {
+            return _value;
+        }
+
+        return elseBranch();
     }
 
     public Option<TResult> Select<TResult>(Func<T, TResult> selector)
     {
         if (!HasValue)
+        {
             return Option<TResult>.Empty();
+        }
 
-        return Option<TResult>.FromValue(selector(_value!));
+        return Option<TResult>.FromValue(selector(_value));
+    }
+}
+
+public static class Option
+{
+    public static Option<T> Empty<T>()
+    {
+        return Option<T>.Empty();
+    }
+
+    public static Option<T> FromValue<T>(T value)
+    {
+        return Option<T>.FromValue(value);
     }
 }

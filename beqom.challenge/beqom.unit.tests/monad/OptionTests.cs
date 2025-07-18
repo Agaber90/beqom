@@ -1,11 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using beqom.monad;
+﻿using beqom.monad;
 
-namespace Monad;
+namespace monad;
 
 public class OptionTests
 {
@@ -16,6 +11,7 @@ public class OptionTests
     {
         Assert.False(Option.Empty<SomeClass>().HasValue);
     }
+
     [Fact]
     public void Default_Option_IsEmpty()
     {
@@ -73,7 +69,7 @@ public class OptionTests
     [Fact]
     public void Non_Empty_Option_ValueOr_Does_Not_Evaluate_Else_Branch()
     {
-        var value = new object();
+        var value = new SomeClass();
         var option = Option.FromValue(value);
         Func<SomeClass> fct = () =>
         {
